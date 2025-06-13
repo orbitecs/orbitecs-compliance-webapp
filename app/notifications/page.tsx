@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import {
-  Bell,
   Check,
   CheckCheck,
   ChevronDown,
@@ -36,7 +35,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useToast } from "@/components/ui/toast-provider"
+import { useToast } from "@/components/ui/use-toast"
 import {
   useNotifications,
   type Notification,
@@ -54,7 +53,6 @@ export default function NotificationsPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedSection, setSelectedSection] = useState<NotificationSection | "all">("all")
   const [selectedPriority, setSelectedPriority] = useState<NotificationPriority | "all">("all")
-  const [selectedStatus, setSelectedStatus] = useState<NotificationStatus | "all">("all")
   const [selectedTab, setSelectedTab] = useState<"all" | "unread" | "read" | "archived">("all")
 
   // Filtrar notificaciones según los criterios seleccionados
@@ -84,14 +82,9 @@ export default function NotificationsPage() {
         return false
       }
 
-      // Filtro por estado
-      if (selectedStatus !== "all" && notification.status !== selectedStatus) {
-        return false
-      }
-
       return true
     })
-  }, [notifications, searchQuery, selectedSection, selectedPriority, selectedStatus, selectedTab])
+  }, [notifications, searchQuery, selectedSection, selectedPriority, selectedTab])
 
   // Ordenar notificaciones por fecha (más recientes primero)
   const sortedNotifications = useMemo(() => {
@@ -101,14 +94,12 @@ export default function NotificationsPage() {
   // Agrupar notificaciones por fecha
   const groupedNotifications = useMemo(() => {
     const groups: Record<string, Notification[]> = {}
+    const today = new Date()
+    const yesterday = new Date(today)
+    yesterday.setDate(yesterday.getDate() - 1)
 
     sortedNotifications.forEach((notification) => {
-      const today = new Date()
-      const yesterday = new Date(today)
-      yesterday.setDate(yesterday.getDate() - 1)
-
       const notificationDate = new Date(notification.createdAt)
-
       let groupKey: string
 
       if (notificationDate.toDateString() === today.toDateString()) {
@@ -138,10 +129,7 @@ export default function NotificationsPage() {
     if (notification.status === "unread") {
       markAsRead(notification.id)
     }
-
-    if (notification.link) {
-      router.push(notification.link)
-    }
+    notification.link && router.push(notification.link)
   }
 
   // Manejar marcar como leída
@@ -149,7 +137,7 @@ export default function NotificationsPage() {
     e.stopPropagation()
     markAsRead(notification.id)
     toast({
-      title: "Notificación marcada como leída",
+      title: "Éxito",
       description: "La notificación ha sido marcada como leída correctamente.",
     })
   }
@@ -159,7 +147,7 @@ export default function NotificationsPage() {
     e.stopPropagation()
     archiveNotification(notification.id)
     toast({
-      title: "Notificación archivada",
+      title: "Éxito",
       description: "La notificación ha sido archivada correctamente.",
     })
   }
@@ -169,7 +157,7 @@ export default function NotificationsPage() {
     e.stopPropagation()
     deleteNotification(notification.id)
     toast({
-      title: "Notificación eliminada",
+      title: "Éxito",
       description: "La notificación ha sido eliminada correctamente.",
     })
   }
@@ -178,7 +166,7 @@ export default function NotificationsPage() {
   const handleMarkAllAsRead = () => {
     markAllAsRead()
     toast({
-      title: "Todas las notificaciones marcadas como leídas",
+      title: "Éxito",
       description: "Todas las notificaciones han sido marcadas como leídas correctamente.",
     })
   }
@@ -211,322 +199,202 @@ export default function NotificationsPage() {
         color: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-300",
       },
       users: { label: "Usuarios", color: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300" },
-      settings: { label: "Configuración", color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300" },
+      settings: { label: "Configuración", color: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300" },
     }
 
+    const config = sectionConfig[section]
     return (
-      <Badge variant="outline" className={`${sectionConfig[section].color} border-0`}>
-        {sectionConfig[section].label}
+      <Badge variant="secondary" className={config.color}>
+        {config.label}
       </Badge>
     )
   }
 
-  // Renderizar texto de prioridad
-  const getPriorityText = (priority: NotificationPriority) => {
-    switch (priority) {
-      case "low":
-        return "Baja"
-      case "medium":
-        return "Media"
-      case "high":
-        return "Alta"
-      case "critical":
-        return "Crítica"
+  // Renderizar badge de prioridad
+  const renderPriorityBadge = (priority: NotificationPriority) => {
+    const priorityConfig = {
+      low: { label: "Baja", color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300" },
+      medium: { label: "Media", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300" },
+      high: { label: "Alta", color: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300" },
+      critical: { label: "Crítica", color: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300" },
+    }
+
+    const config = priorityConfig[priority]
+    return (
+      <Badge variant="secondary" className={config.color}>
+        {config.label}
+      </Badge>
+    )
+  }
+
+  // Renderizar fecha relativa
+  const renderRelativeDate = (date: Date) => {
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+    const minutes = Math.floor(diff / 1000 / 60)
+    const hours = Math.floor(minutes / 60)
+    const days = Math.floor(hours / 24)
+
+    if (minutes < 60) {
+      return `Hace ${minutes} ${minutes === 1 ? "minuto" : "minutos"}`
+    } else if (hours < 24) {
+      return `Hace ${hours} ${hours === 1 ? "hora" : "horas"}`
+    } else if (days < 7) {
+      return `Hace ${days} ${days === 1 ? "día" : "días"}`
+    } else {
+      return format(date, "d 'de' MMMM 'de' yyyy", { locale: es })
     }
   }
 
   return (
     <div className="container mx-auto py-6">
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">Centro de Notificaciones</h1>
-          <p className="text-muted-foreground">
-            Gestiona todas tus notificaciones y mantente al día con las actualizaciones importantes.
-          </p>
-        </div>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Notificaciones</h1>
+        <Button onClick={handleMarkAllAsRead} variant="outline">
+          <CheckCheck className="mr-2 h-4 w-4" />
+          Marcar todas como leídas
+        </Button>
+      </div>
 
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col md:flex-row gap-4 justify-between">
-            {/* Buscador */}
-            <div className="relative w-full md:w-96">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Buscar notificaciones..."
-                className="w-full pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            {/* Filtros */}
-            <div className="flex flex-wrap gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-1">
-                    <Filter className="h-4 w-4" />
-                    Filtros
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>Filtrar por</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuGroup>
-                    <DropdownMenuLabel className="text-xs">Sección</DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onClick={() => setSelectedSection("all")}
-                      className={selectedSection === "all" ? "bg-accent" : ""}
-                    >
-                      Todas
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setSelectedSection("dashboard")}
-                      className={selectedSection === "dashboard" ? "bg-accent" : ""}
-                    >
-                      Dashboard
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setSelectedSection("checklists")}
-                      className={selectedSection === "checklists" ? "bg-accent" : ""}
-                    >
-                      Checklists
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setSelectedSection("assessments")}
-                      className={selectedSection === "assessments" ? "bg-accent" : ""}
-                    >
-                      Assessments
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setSelectedSection("action_plans")}
-                      className={selectedSection === "action_plans" ? "bg-accent" : ""}
-                    >
-                      Planes de Acción
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setSelectedSection("users")}
-                      className={selectedSection === "users" ? "bg-accent" : ""}
-                    >
-                      Usuarios
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setSelectedSection("settings")}
-                      className={selectedSection === "settings" ? "bg-accent" : ""}
-                    >
-                      Configuración
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuGroup>
-                    <DropdownMenuLabel className="text-xs">Prioridad</DropdownMenuLabel>
-                    <DropdownMenuItem
-                      onClick={() => setSelectedPriority("all")}
-                      className={selectedPriority === "all" ? "bg-accent" : ""}
-                    >
-                      Todas
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setSelectedPriority("low")}
-                      className={selectedPriority === "low" ? "bg-accent" : ""}
-                    >
-                      <AlertCircle className="h-4 w-4 text-blue-500 mr-2" />
-                      Baja
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setSelectedPriority("medium")}
-                      className={selectedPriority === "medium" ? "bg-accent" : ""}
-                    >
-                      <AlertCircle className="h-4 w-4 text-yellow-500 mr-2" />
-                      Media
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setSelectedPriority("high")}
-                      className={selectedPriority === "high" ? "bg-accent" : ""}
-                    >
-                      <AlertTriangle className="h-4 w-4 text-orange-500 mr-2" />
-                      Alta
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => setSelectedPriority("critical")}
-                      className={selectedPriority === "critical" ? "bg-accent" : ""}
-                    >
-                      <AlertOctagon className="h-4 w-4 text-red-500 mr-2" />
-                      Crítica
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Button variant="outline" onClick={handleMarkAllAsRead}>
-                <CheckCheck className="h-4 w-4 mr-2" />
-                Marcar todas como leídas
-              </Button>
-            </div>
-          </div>
-
-          {/* Filtros activos */}
-          {(selectedSection !== "all" || selectedPriority !== "all" || searchQuery) && (
-            <div className="flex flex-wrap gap-2">
-              {selectedSection !== "all" && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  Sección:{" "}
-                  {selectedSection === "action_plans"
-                    ? "Planes de Acción"
-                    : selectedSection.charAt(0).toUpperCase() + selectedSection.slice(1)}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedSection("all")} />
-                </Badge>
-              )}
-
-              {selectedPriority !== "all" && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  Prioridad: {getPriorityText(selectedPriority)}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedPriority("all")} />
-                </Badge>
-              )}
-
-              {searchQuery && (
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  Búsqueda: {searchQuery}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => setSearchQuery("")} />
-                </Badge>
-              )}
-
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-xs"
-                onClick={() => {
-                  setSelectedSection("all")
-                  setSelectedPriority("all")
-                  setSearchQuery("")
-                }}
-              >
-                Limpiar filtros
-              </Button>
-            </div>
-          )}
-
-          {/* Tabs */}
-          <Tabs
-            defaultValue="all"
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row">
+        <div className="flex-1">
+          <Input
+            placeholder="Buscar notificaciones..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full"
-            value={selectedTab}
-            onValueChange={(value) => setSelectedTab(value as any)}
-          >
-            <TabsList className="grid w-full grid-cols-4 md:w-auto">
-              <TabsTrigger value="all">Todas</TabsTrigger>
-              <TabsTrigger value="unread">No leídas</TabsTrigger>
-              <TabsTrigger value="read">Leídas</TabsTrigger>
-              <TabsTrigger value="archived">Archivadas</TabsTrigger>
-            </TabsList>
+          />
+        </div>
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-[180px]">
+                <Filter className="mr-2 h-4 w-4" />
+                Sección: {selectedSection === "all" ? "Todas" : selectedSection}
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => setSelectedSection("all")}>Todas</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => setSelectedSection("dashboard")}>Dashboard</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSelectedSection("checklists")}>Checklists</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSelectedSection("assessments")}>Assessments</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSelectedSection("action_plans")}>Planes de Acción</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSelectedSection("users")}>Usuarios</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSelectedSection("settings")}>Configuración</DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-            <TabsContent value={selectedTab} className="mt-6">
-              {Object.keys(groupedNotifications).length > 0 ? (
-                Object.entries(groupedNotifications).map(([group, groupNotifications]) => (
-                  <div key={group} className="mb-8">
-                    <h3 className="mb-4 text-lg font-semibold">{group}</h3>
-                    <div className="space-y-4">
-                      {groupNotifications.map((notification) => (
-                        <Card
-                          key={notification.id}
-                          className={`cursor-pointer transition-colors ${
-                            notification.status === "unread"
-                              ? "border-l-4 border-l-blue-500 dark:border-l-blue-400"
-                              : ""
-                          }`}
-                          onClick={() => handleNotificationClick(notification)}
-                        >
-                          <CardHeader className="pb-2">
-                            <div className="flex justify-between items-start">
-                              <div className="flex items-center gap-2">
-                                {renderPriorityIcon(notification.priority)}
-                                <CardTitle className="text-base">{notification.title}</CardTitle>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                {renderSectionBadge(notification.section)}
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                      <ChevronDown className="h-4 w-4" />
-                                      <span className="sr-only">Acciones</span>
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    {notification.status === "unread" && (
-                                      <DropdownMenuItem onClick={(e) => handleMarkAsRead(notification, e)}>
-                                        <Check className="mr-2 h-4 w-4" />
-                                        <span>Marcar como leída</span>
-                                      </DropdownMenuItem>
-                                    )}
-                                    {notification.status !== "archived" && (
-                                      <DropdownMenuItem onClick={(e) => handleArchive(notification, e)}>
-                                        <Archive className="mr-2 h-4 w-4" />
-                                        <span>Archivar</span>
-                                      </DropdownMenuItem>
-                                    )}
-                                    <DropdownMenuItem
-                                      onClick={(e) => handleDelete(notification, e)}
-                                      className="text-red-600 dark:text-red-400"
-                                    >
-                                      <Trash2 className="mr-2 h-4 w-4" />
-                                      <span>Eliminar</span>
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            </div>
-                            <CardDescription className="text-sm">{notification.message}</CardDescription>
-                          </CardHeader>
-                          <CardFooter className="pt-0 pb-3 flex justify-between items-center">
-                            <div className="flex items-center text-xs text-muted-foreground">
-                              <Clock className="mr-1 h-3 w-3" />
-                              {format(notification.createdAt, "d 'de' MMMM 'a las' HH:mm", { locale: es })}
-                            </div>
-                            {notification.actionText && notification.link && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 text-xs"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  if (notification.status === "unread") {
-                                    markAsRead(notification.id)
-                                  }
-                                  router.push(notification.link!)
-                                }}
-                              >
-                                {notification.actionText}
-                              </Button>
-                            )}
-                          </CardFooter>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <Bell className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium">No hay notificaciones</h3>
-                  <p className="text-muted-foreground text-center mt-2">
-                    {selectedTab === "all"
-                      ? "No tienes notificaciones en este momento."
-                      : selectedTab === "unread"
-                        ? "No tienes notificaciones sin leer."
-                        : selectedTab === "read"
-                          ? "No tienes notificaciones leídas."
-                          : "No tienes notificaciones archivadas."}
-                  </p>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-[180px]">
+                <Filter className="mr-2 h-4 w-4" />
+                Prioridad: {selectedPriority === "all" ? "Todas" : selectedPriority}
+                <ChevronDown className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => setSelectedPriority("all")}>Todas</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuItem onClick={() => setSelectedPriority("low")}>Baja</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSelectedPriority("medium")}>Media</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSelectedPriority("high")}>Alta</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSelectedPriority("critical")}>Crítica</DropdownMenuItem>
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
+
+      <Tabs defaultValue="all" value={selectedTab} onValueChange={(value) => setSelectedTab(value as typeof selectedTab)}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="all">Todas</TabsTrigger>
+          <TabsTrigger value="unread">No leídas</TabsTrigger>
+          <TabsTrigger value="read">Leídas</TabsTrigger>
+          <TabsTrigger value="archived">Archivadas</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={selectedTab}>
+          {Object.entries(groupedNotifications).map(([group, notifications]) => (
+            <div key={group} className="mb-6">
+              <h2 className="mb-4 text-lg font-semibold">{group}</h2>
+              <div className="grid gap-4">
+                {notifications.map((notification) => (
+                  <Card
+                    key={notification.id}
+                    className={`cursor-pointer transition-colors hover:bg-muted/50 ${
+                      notification.status === "unread" ? "border-l-4 border-l-primary" : ""
+                    }`}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <CardTitle className="text-base">{notification.title}</CardTitle>
+                          <CardDescription>{notification.message}</CardDescription>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          {renderPriorityIcon(notification.priority)}
+                          {notification.status === "unread" && (
+                            <Badge variant="secondary" className="bg-primary text-primary-foreground">
+                              No leída
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {renderSectionBadge(notification.section)}
+                        {renderPriorityBadge(notification.priority)}
+                        <Badge variant="outline" className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {renderRelativeDate(notification.createdAt)}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardFooter className="flex justify-end space-x-2 pt-2">
+                      {notification.status === "unread" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleMarkAsRead(notification, e)}
+                          className="h-8"
+                        >
+                          <Check className="mr-2 h-4 w-4" />
+                          Marcar como leída
+                        </Button>
+                      )}
+                      {notification.status !== "archived" && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => handleArchive(notification, e)}
+                          className="h-8"
+                        >
+                          <Archive className="mr-2 h-4 w-4" />
+                          Archivar
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => handleDelete(notification, e)}
+                        className="h-8 text-destructive hover:text-destructive"
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Eliminar
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          ))}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

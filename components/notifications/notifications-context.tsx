@@ -101,38 +101,6 @@ const generateMockNotifications = (): Notification[] => {
       link: "/settings/security",
       actionText: "Ver detalles",
     },
-    // Notificaciones leídas
-    {
-      id: "6",
-      title: "Mantenimiento programado",
-      message: "La plataforma estará en mantenimiento el próximo domingo",
-      section: "dashboard",
-      priority: "medium",
-      status: "read",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3 días atrás
-      readAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // Leído hace 2 días
-    },
-    {
-      id: "7",
-      title: "Actualización de términos",
-      message: "Los términos y condiciones han sido actualizados",
-      section: "settings",
-      priority: "low",
-      status: "read",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5), // 5 días atrás
-      readAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 4), // Leído hace 4 días
-    },
-    // Notificaciones archivadas
-    {
-      id: "8",
-      title: "Bienvenido a ComplianceHub",
-      message: "Gracias por registrarte en nuestra plataforma",
-      section: "dashboard",
-      priority: "low",
-      status: "archived",
-      createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 30), // 30 días atrás
-      readAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 29), // Leído hace 29 días
-    },
   ]
 }
 
@@ -150,8 +118,6 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
   // Calcular contadores basados en las notificaciones no leídas
   const calculateCounts = (notifs: Notification[]) => {
-    const unreadNotifications = notifs.filter((n) => n.status === "unread")
-
     const newCounts: NotificationCounts = {
       dashboard: 0,
       checklists: 0,
@@ -159,11 +125,14 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       action_plans: 0,
       users: 0,
       settings: 0,
-      total: unreadNotifications.length,
+      total: 0,
     }
 
-    unreadNotifications.forEach((notification) => {
-      newCounts[notification.section]++
+    notifs.forEach((notification) => {
+      if (notification.status === "unread") {
+        newCounts[notification.section]++
+        newCounts.total++
+      }
     })
 
     return newCounts
@@ -182,29 +151,19 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     const now = new Date()
 
     setNotifications((prev) => {
-      return prev.map((notification) => {
-        // Si es un ID específico
-        if (typeof idOrSection === "string" && notification.id === idOrSection && notification.status === "unread") {
-          return { ...notification, status: "read", readAt: now }
-        }
-
-        // Si es una sección completa
+      const updated = prev.map((notification) => {
         if (
-          typeof idOrSection !== "string" &&
-          notification.section === idOrSection &&
-          notification.status === "unread"
+          (typeof idOrSection === "string" && notification.id === idOrSection) ||
+          (typeof idOrSection !== "string" && notification.section === idOrSection)
         ) {
-          return { ...notification, status: "read", readAt: now }
+          if (notification.status === "unread") {
+            return { ...notification, status: "read", readAt: now }
+          }
         }
-
         return notification
       })
-    })
-
-    // Actualizar contadores
-    setNotifications((current) => {
-      setCounts(calculateCounts(current))
-      return current
+      setCounts(calculateCounts(updated))
+      return updated
     })
   }
 
@@ -213,68 +172,43 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     const now = new Date()
 
     setNotifications((prev) => {
-      return prev.map((notification) => {
+      const updated = prev.map((notification) => {
         if (notification.status === "unread") {
           return { ...notification, status: "read", readAt: now }
         }
         return notification
       })
-    })
-
-    setCounts({
-      dashboard: 0,
-      checklists: 0,
-      assessments: 0,
-      action_plans: 0,
-      users: 0,
-      settings: 0,
-      total: 0,
+      setCounts(calculateCounts(updated))
+      return updated
     })
   }
 
   // Archivar una notificación
   const archiveNotification = (id: string) => {
     setNotifications((prev) => {
-      return prev.map((notification) => {
+      const updated = prev.map((notification) => {
         if (notification.id === id) {
-          return {
-            ...notification,
-            status: "archived",
-            readAt: notification.readAt || new Date(),
-          }
+          return { ...notification, status: "archived" }
         }
         return notification
       })
-    })
-
-    // Actualizar contadores
-    setNotifications((current) => {
-      setCounts(calculateCounts(current))
-      return current
+      setCounts(calculateCounts(updated))
+      return updated
     })
   }
 
   // Eliminar una notificación
   const deleteNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((notification) => notification.id !== id))
-
-    // Actualizar contadores
-    setNotifications((current) => {
-      setCounts(calculateCounts(current))
-      return current
+    setNotifications((prev) => {
+      const updated = prev.filter((notification) => notification.id !== id)
+      setCounts(calculateCounts(updated))
+      return updated
     })
   }
 
   // Cargar notificaciones al montar el componente
   useEffect(() => {
     fetchNotifications()
-
-    // Simular actualizaciones periódicas (cada 30 segundos)
-    const interval = setInterval(() => {
-      fetchNotifications()
-    }, 30000)
-
-    return () => clearInterval(interval)
   }, [])
 
   return (
