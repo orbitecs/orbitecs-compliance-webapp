@@ -1,0 +1,215 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    --radius: 0.5rem;
+
+    /* Chart colors */
+    --chart-1: 240 5.9% 10%;
+    --chart-2: 240 5.9% 40%;
+    --chart-3: 0 84.2% 60.2%;
+    --chart-4: 240 5.9% 70%;
+    --chart-5: 240 5.9% 90%;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+
+    /* Chart colors */
+    --chart-1: 0 0% 98%;
+    --chart-2: 0 0% 70%;
+    --chart-3: 0 62.8% 30.6%;
+    --chart-4: 0 0% 40%;
+    --chart-5: 0 0% 20%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Sidebar styles */
+[data-sidebar="sidebar"] {
+  background-color: hsl(var(--sidebar-background));
+  color: hsl(var(--sidebar-foreground));
+}
+
+.md\:w-64 {
+  width: 16rem;
+}
+
+/* Fix for content to not overlap with sidebar */
+@media (min-width: 768px) {
+  .md\:pl-64 {
+    padding-left: 16rem;
+  }
+}
+
+/* Asegura que el header se extienda por toda la pantalla */
+header {
+  width: 100%;
+}
+
+/* Ajusta el z-index para que el header esté por encima del sidebar */
+header {
+  z-index: 30;
+}
+
+/* Estilos para los gráficos */
+.recharts-wrapper {
+  margin: 0 auto;
+}
+
+/* Asegura que los tooltips de los gráficos no se corten */
+.recharts-tooltip-wrapper {
+  z-index: 10;
+}
+
+/* Mejora la visualización de las leyendas */
+.recharts-legend-item-text {
+  color: hsl(var(--foreground));
+  font-size: 12px;
+}
+
+/* Ajusta el tamaño de los textos en los ejes */
+.recharts-cartesian-axis-tick-value {
+  font-size: 12px;
+  fill: hsl(var(--foreground));
+}
+
+/* Asegura que los textos en los gráficos sean legibles en ambos temas */
+.recharts-text {
+  fill: hsl(var(--foreground));
+}
+
+/* Ajusta el color de fondo de los tooltips */
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: hsl(var(--background)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Estilos para campos requeridos */
+label.required:after {
+  content: " *";
+  color: hsl(var(--destructive));
+}
+
+/* Mejora la visualización de los badges en el resumen de checklists */
+.badge-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Añadir estilos de animación personalizados al final del archivo */
+
+@keyframes pulse-subtle {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+.pulse-on-hover:hover {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+/* Mejoras para las animaciones de popover */
+.popover-animation-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.question-preview-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.question-preview-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.question-preview-exit {
+  opacity: 1;
+}
+
+.question-preview-exit-active {
+  opacity: 0;
+  transition: opacity 200ms;
+}
+
+/* Mejora para el efecto de hover en las tarjetas */
+.card-hover-effect {
+  transition: all 0.3s ease;
+}
+
+.card-hover-effect:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+/* Animación para el botón "Ver todas" */
+@keyframes gentle-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.gentle-bounce-hover:hover {
+  animation: gentle-bounce 1s ease-in-out infinite;
+}
