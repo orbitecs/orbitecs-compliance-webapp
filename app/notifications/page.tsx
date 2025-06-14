@@ -35,7 +35,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useToast } from "@/components/ui/use-toast"
+import { toast } from "@/components/ui/use-toast"
 import {
   useNotifications,
   type Notification,
@@ -46,7 +46,6 @@ import {
 
 export default function NotificationsPage() {
   const router = useRouter()
-  const { toast } = useToast()
   const { notifications, markAsRead, markAllAsRead, archiveNotification, deleteNotification } = useNotifications()
 
   // Estado para filtros

@@ -1,15 +1,18 @@
 "use client"
 
+import type React from "react"
 import { useState } from "react"
-import { Search, Filter, Eye, CheckCircle, X, ChevronDown } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
+import { Plus, Search, Filter, MoreHorizontal, Eye, Pencil, Trash2, CheckCircle, X, ChevronDown } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
 
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { CreateChecklistDialog } from "@/components/checklists/create-checklist-dialog"
-// Asegurémonos de que la importación del useToastContext sea correcta
-import { useToastContext } from "@/components/ui/toast-provider"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
@@ -22,9 +25,21 @@ import {
 } from "@/components/ui/drawer"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-
-// Importar los componentes Popover
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 // Datos de ejemplo con preguntas
 const checklists = [
@@ -117,8 +132,8 @@ export default function ChecklistsPage() {
   const [viewingChecklist, setViewingChecklist] = useState<(typeof checklists)[0] | null>(null)
   const [open, setOpen] = useState(false)
   const [openSummary, setOpenSummary] = useState(false)
-  const { showSuccess, showInfo } = useToastContext()
   const isDesktop = useMediaQuery("(min-width: 768px)")
+  const router = useRouter()
 
   const filteredChecklists = checklists.filter((checklist) => {
     const matchesSearch =
@@ -137,7 +152,10 @@ export default function ChecklistsPage() {
       setSelectedChecklists([...selectedChecklists, checklistId])
     }
 
-    showSuccess(`Checklist agregado al assessment`)
+    toast({
+      title: "Éxito",
+      description: "Checklist agregado al assessment",
+    })
   }
 
   const handleRemoveFromAssessment = (checklistId: string) => {
@@ -154,7 +172,10 @@ export default function ChecklistsPage() {
       // Simulamos una llamada a la API
       await new Promise((resolve) => setTimeout(resolve, 1500))
 
-      showSuccess("Assessment creado exitosamente")
+      toast({
+        title: "Éxito",
+        description: "Assessment creado exitosamente",
+      })
       // Aquí iría la redirección a la página de nuevo assessment
     } catch (error) {
       console.error("Error al crear el assessment", error)
@@ -202,6 +223,25 @@ export default function ChecklistsPage() {
       )}
     </>
   )
+
+  // Manejar eliminar checklist
+  const handleDelete = (id: string) => {
+    // Aquí iría la lógica para eliminar el checklist
+    toast({
+      title: "Éxito",
+      description: "Checklist eliminado correctamente.",
+    })
+  }
+
+  // Manejar ver detalles
+  const handleViewDetails = (id: string) => {
+    router.push(`/checklists/${id}`)
+  }
+
+  // Manejar editar
+  const handleEdit = (id: string) => {
+    router.push(`/checklists/${id}/edit`)
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -262,9 +302,6 @@ export default function ChecklistsPage() {
           </Select>
         </div>
       </div>
-
-      {/* Modificar la sección donde se renderizan las tarjetas de checklist */}
-      {/* Reemplazar el bloque de código que muestra las tarjetas con este: */}
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredChecklists.map((checklist) => (
@@ -373,14 +410,12 @@ export default function ChecklistsPage() {
         ))}
       </div>
 
-      {/* Panel lateral fijo para escritorio */}
       {selectedChecklists.length > 0 && (
         <div className="hidden md:block fixed right-6 top-24 w-80 bg-background border rounded-lg shadow-md p-4 overflow-auto max-h-[calc(100vh-120px)]">
           <SummaryContent />
         </div>
       )}
 
-      {/* Modal/Drawer para ver preguntas */}
       {isDesktop ? (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogContent className="sm:max-w-[600px]">
@@ -453,7 +488,6 @@ export default function ChecklistsPage() {
         </Drawer>
       )}
 
-      {/* Drawer para ver seleccionados en móvil */}
       <Drawer open={openSummary} onOpenChange={setOpenSummary}>
         <DrawerContent>
           <DrawerHeader>

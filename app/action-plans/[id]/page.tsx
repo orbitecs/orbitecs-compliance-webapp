@@ -1,109 +1,134 @@
 "use client"
 
+import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Pencil, Trash2, FileText } from "lucide-react"
-
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useToastContext } from "@/components/ui/toast-provider"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Input } from "@/components/ui/input"
+import { ArrowLeft, Pencil, Trash2, FileText, CalendarIcon, CheckCircle2, Clock, Users } from "lucide-react"
 import { format } from "date-fns"
+import { es } from "date-fns/locale"
+import { toast } from "@/components/ui/use-toast"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+
+type Status = "pendiente" | "en-curso" | "finalizado" | "completado"
+
+interface Activity {
+  id: string
+  title: string
+  description: string
+  date: Date
+  status: Status
+  assignedTo: string
+}
+
+interface Assessment {
+  id: string
+  name: string
+}
+
+interface ActionPlan {
+  id: string
+  title: string
+  description: string
+  status: Status
+  dueDate: Date
+  updatedAt: Date
+  createdAt: Date
+  progress: number
+  responsible: string
+  finding: string
+  action: string
+  activities: Activity[]
+  assessments: Assessment[]
+}
+
+const statusConfig = {
+  pendiente: { label: "Pendiente", variant: "outline" as const },
+  "en-curso": { label: "En Curso", variant: "default" as const },
+  finalizado: { label: "Finalizado", variant: "secondary" as const },
+  completado: { label: "Completado", variant: "secondary" as const },
+} as const;
 
 // Datos de ejemplo para un plan de acción específico
-const actionPlanData = {
+const actionPlanData: ActionPlan = {
   id: "AP-001",
-  finding: "No existe una política de seguridad de la información aprobada",
-  action: "Desarrollar y aprobar una política de seguridad de la información",
+  title: "Implementación de controles de seguridad",
+  description: "Plan para implementar y verificar los controles de seguridad en la infraestructura",
+  status: "en-curso",
+  dueDate: new Date("2024-06-30"),
+  updatedAt: new Date("2024-03-15"),
+  createdAt: new Date("2024-03-10"),
+  progress: 50,
   responsible: "Juan Pérez",
-  dueDate: new Date(2023, 6, 15),
-  status: "pendiente",
-  description:
-    "Se requiere desarrollar y aprobar una política de seguridad de la información que cumpla con los requisitos de ISO 27001.",
-  progress: 30,
-  createdAt: new Date(2023, 5, 10),
-  updatedAt: new Date(2023, 5, 20),
-  assessments: [
-    {
-      id: "ASS-001",
-      name: "ISO 27001 - Evaluación Anual",
-    },
-    {
-      id: "ASS-005",
-      name: "ISO 27001 - Evaluación de Controles",
-    },
-  ],
+  finding: "Falta de controles de seguridad en la infraestructura",
+  action: "Implementar y verificar controles de seguridad",
   activities: [
     {
       id: "ACT-001",
-      description: "Investigar estándares y mejores prácticas",
-      status: "completado",
-      date: new Date(2023, 5, 15),
+      title: "Revisión de políticas de seguridad",
+      description: "Actualizar y revisar las políticas de seguridad existentes",
+      date: new Date("2024-03-20"),
+      status: "pendiente",
+      assignedTo: "Juan Pérez"
     },
     {
       id: "ACT-002",
-      description: "Redactar borrador de política",
+      title: "Implementación de firewall",
+      description: "Configurar y probar el nuevo firewall",
+      date: new Date("2024-03-25"),
       status: "en-curso",
-      date: new Date(2023, 6, 1),
-    },
-    {
-      id: "ACT-003",
-      description: "Revisión por parte de stakeholders",
-      status: "pendiente",
-      date: new Date(2023, 6, 10),
-    },
-    {
-      id: "ACT-004",
-      description: "Aprobación por la dirección",
-      status: "pendiente",
-      date: new Date(2023, 6, 15),
-    },
+      assignedTo: "María García"
+    }
   ],
-}
-
-const statusMap = {
-  pendiente: { label: "Pendiente", variant: "outline" as const },
-  "en-curso": { label: "En curso", variant: "default" as const },
-  finalizado: { label: "Finalizado", variant: "secondary" as const },
-  completado: { label: "Completado", variant: "secondary" as const },
+  assessments: [
+    {
+      id: "AS-001",
+      name: "Assessment de Seguridad 1"
+    },
+    {
+      id: "AS-002",
+      name: "Assessment de Seguridad 2"
+    }
+  ]
 }
 
 export default function ActionPlanDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const { showSuccess, showError } = useToastContext()
   const [activeTab, setActiveTab] = useState("details")
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [confirmationId, setConfirmationId] = useState("")
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   // En una aplicación real, aquí cargaríamos los datos del plan de acción según el ID
   // Por ahora usamos los datos de ejemplo
   const actionPlan = actionPlanData
 
-  const handleDeleteClick = () => {
-    setConfirmationId("")
-    setDeleteDialogOpen(true)
-  }
-
-  const handleDeleteConfirm = () => {
-    if (confirmationId === actionPlan.id) {
-      // Aquí iría la lógica para eliminar el plan de acción
-      showSuccess(`Plan de acción ${actionPlan.id} eliminado correctamente`)
-      setDeleteDialogOpen(false)
+  const handleDelete = async () => {
+    setIsLoading(true)
+    try {
+      // Aquí iría la llamada a la API para eliminar el plan de acción
+      toast({
+        title: "Éxito",
+        description: "Plan de acción eliminado correctamente",
+      })
       router.push("/action-plans")
-    } else {
-      showError("El ID de confirmación no coincide")
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Hubo un error al eliminar el plan de acción",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+      setIsDeleteDialogOpen(false)
     }
   }
 
@@ -124,7 +149,7 @@ export default function ActionPlanDetailPage({ params }: { params: { id: string 
           <Button variant="outline" onClick={() => router.push(`/action-plans/${params.id}/edit`)}>
             <Pencil className="mr-2 h-4 w-4" /> Editar
           </Button>
-          <Button variant="destructive" onClick={handleDeleteClick}>
+          <Button variant="destructive" onClick={() => setIsDeleteDialogOpen(true)}>
             <Trash2 className="mr-2 h-4 w-4" /> Eliminar
           </Button>
         </div>
@@ -136,11 +161,11 @@ export default function ActionPlanDetailPage({ params }: { params: { id: string 
             <CardTitle className="text-sm font-medium">Estado</CardTitle>
           </CardHeader>
           <CardContent>
-            <Badge variant={statusMap[actionPlan.status].variant} className="text-base">
-              {statusMap[actionPlan.status].label}
+            <Badge variant={statusConfig[actionPlan.status].variant} className="text-base">
+              {statusConfig[actionPlan.status].label}
             </Badge>
             <div className="mt-1 text-xs text-muted-foreground">
-              Fecha límite: {format(actionPlan.dueDate, "dd/MM/yyyy")}
+              Actualizado el {format(actionPlan.updatedAt, "dd/MM/yyyy")}
             </div>
           </CardContent>
         </Card>
@@ -221,7 +246,7 @@ export default function ActionPlanDetailPage({ params }: { params: { id: string 
                       <h3 className="font-medium">{activity.description}</h3>
                       <p className="text-sm text-muted-foreground">Fecha: {format(activity.date, "dd/MM/yyyy")}</p>
                     </div>
-                    <Badge variant={statusMap[activity.status].variant}>{statusMap[activity.status].label}</Badge>
+                    <Badge variant={statusConfig[activity.status].variant}>{statusConfig[activity.status].label}</Badge>
                   </div>
                 </div>
               ))}
@@ -254,34 +279,31 @@ export default function ActionPlanDetailPage({ params }: { params: { id: string 
         </TabsContent>
       </Tabs>
 
-      {/* Diálogo de confirmación para eliminar */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Está seguro de eliminar este plan de acción?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. El plan de acción será eliminado permanentemente de nuestros servidores.
-              <div className="mt-4">
-                <div className="font-medium text-sm">
-                  Para confirmar, escriba el ID del plan de acción: {actionPlan.id}
-                </div>
-                <Input
-                  className="mt-2"
-                  value={confirmationId}
-                  onChange={(e) => setConfirmationId(e.target.value)}
-                  placeholder="Escriba el ID para confirmar"
-                />
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar Plan de Acción</DialogTitle>
+            <DialogDescription>
+              ¿Está seguro de que desea eliminar este plan de acción? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isLoading}
+            >
+              {isLoading ? "Eliminando..." : "Eliminar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

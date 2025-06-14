@@ -1,24 +1,42 @@
 "use client"
 
+import type React from "react"
 import { useState } from "react"
-import { CalendarIcon, Filter, Plus, Search, Eye, Pencil, Trash2, MoreHorizontal, Copy } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
+import {
+  AlertCircle,
+  AlertTriangle,
+  AlertOctagon,
+  ChevronDown,
+  Filter,
+  Search,
+  Plus,
+  MoreHorizontal,
+  Pencil,
+  Trash2,
+  Eye,
+  CalendarIcon,
+  Copy,
+} from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useToastContext } from "@/components/ui/toast-provider"
+import { toast } from "@/components/ui/use-toast"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,8 +46,17 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { CreateAssessmentModal } from "@/components/assessments/create-assessment-modal"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 // Datos de ejemplo
 const assessments = [
@@ -133,7 +160,6 @@ const statusMap = {
 
 export default function AssessmentsPage() {
   const router = useRouter()
-  const { showSuccess, showError } = useToastContext()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [categoryFilter, setCategoryFilter] = useState("all")
@@ -167,12 +193,18 @@ export default function AssessmentsPage() {
   const handleDeleteConfirm = () => {
     if (assessmentToDelete && confirmationId === assessmentToDelete) {
       // Aquí iría la lógica para eliminar el assessment
-      showSuccess(`Assessment ${assessmentToDelete} eliminado correctamente`)
+      toast({
+        title: "Éxito",
+        description: "La evaluación ha sido eliminada correctamente.",
+      })
       setDeleteDialogOpen(false)
       setAssessmentToDelete(null)
       setConfirmationId("")
     } else {
-      showError("El ID de confirmación no coincide")
+      toast({
+        title: "Error",
+        description: "El ID de confirmación no coincide",
+      })
     }
   }
 
@@ -180,9 +212,15 @@ export default function AssessmentsPage() {
     setCreateModalOpen(false)
     setDuplicateAssessment(null)
     if (duplicateAssessment) {
-      showSuccess(`Assessment duplicado exitosamente desde "${duplicateAssessment.name}"`)
+      toast({
+        title: "Éxito",
+        description: "Assessment duplicado exitosamente desde \"" + duplicateAssessment.name + "\"",
+      })
     } else {
-      showSuccess("Assessment creado exitosamente")
+      toast({
+        title: "Éxito",
+        description: "Assessment creado exitosamente",
+      })
     }
     // Aquí podrías recargar la lista de assessments
   }

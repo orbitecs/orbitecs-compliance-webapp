@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Plus, Trash2, AlertCircle } from "lucide-react"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
+import { toast } from "@/components/ui/use-toast"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Checkbox } from "@/components/ui/checkbox"
-import { useToastContext } from "@/components/ui/toast-provider"
+import { useToast } from "@/components/ui/use-toast"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -130,7 +133,7 @@ const assessmentData = {
 
 export default function EditAssessmentPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const { showSuccess, showError } = useToastContext()
+  const { showSuccess, showError } = useToast()
   const [activeTab, setActiveTab] = useState("details")
   const [assessment, setAssessment] = useState(assessmentData)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -221,11 +224,18 @@ export default function EditAssessmentPage({ params }: { params: { id: string } 
       // Simular guardado
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      showSuccess("Assessment actualizado correctamente")
+      toast({
+        title: "Éxito",
+        description: "Assessment actualizado correctamente.",
+      })
       setUnsavedChanges(false)
       router.push(`/assessments/${params.id}`)
     } catch (error) {
-      showError("Error al guardar los cambios")
+      toast({
+        title: "Error",
+        description: "Hubo un error al guardar los cambios.",
+        variant: "destructive",
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -335,12 +345,10 @@ export default function EditAssessmentPage({ params }: { params: { id: string } 
                   <Input
                     id="date"
                     type="date"
-                    value={assessment.date.split("/").reverse().join("-")}
+                    value={format(new Date(assessment.date), "yyyy-MM-dd", { locale: es })}
                     onChange={(e) => {
                       const date = new Date(e.target.value)
-                      const formattedDate = `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1)
-                        .toString()
-                        .padStart(2, "0")}/${date.getFullYear()}`
+                      const formattedDate = format(date, "dd/MM/yyyy", { locale: es })
                       handleUpdateAssessment("date", formattedDate)
                     }}
                   />

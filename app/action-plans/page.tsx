@@ -3,6 +3,9 @@
 import { useState } from "react"
 import { CalendarIcon, Filter, Plus, Search, Eye, Pencil, Trash2, MoreHorizontal, X } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
+import { toast } from "@/components/ui/use-toast"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,8 +26,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
-import { format } from "date-fns"
-import { useToastContext } from "@/components/ui/toast-provider"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -120,16 +121,14 @@ const statusMap = {
 
 export default function ActionPlansPage() {
   const router = useRouter()
-  const { showSuccess, showError } = useToastContext()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [date, setDate] = useState<Date>()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [planToDelete, setPlanToDelete] = useState<string | null>(null)
-  const [confirmationId, setConfirmationId] = useState("")
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const [selectedAssessments, setSelectedAssessments] = useState<string[]>([])
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Campos del formulario
   const [finding, setFinding] = useState("")
@@ -146,21 +145,26 @@ export default function ActionPlansPage() {
     return matchesSearch && matchesStatus
   })
 
-  const handleDeleteClick = (id: string) => {
-    setPlanToDelete(id)
-    setConfirmationId("")
-    setDeleteDialogOpen(true)
-  }
-
-  const handleDeleteConfirm = () => {
-    if (planToDelete && confirmationId === planToDelete) {
-      // Aquí iría la lógica para eliminar el plan de acción
-      showSuccess(`Plan de acción ${planToDelete} eliminado correctamente`)
-      setDeleteDialogOpen(false)
-      setPlanToDelete(null)
-      setConfirmationId("")
-    } else {
-      showError("El ID de confirmación no coincide")
+  const handleDelete = async () => {
+    if (!selectedId) return
+    setIsLoading(true)
+    try {
+      // Aquí iría la llamada a la API para eliminar el plan de acción
+      toast({
+        title: "Éxito",
+        description: "Plan de acción eliminado correctamente",
+      })
+      router.refresh()
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Hubo un error al eliminar el plan de acción",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+      setIsDeleteDialogOpen(false)
+      setSelectedId(null)
     }
   }
 
@@ -183,17 +187,21 @@ export default function ActionPlansPage() {
   const handleCreateActionPlan = async () => {
     // Validaciones
     if (!finding || !action || !responsible || !date) {
-      showError("Por favor complete todos los campos requeridos")
+      toast({
+        title: "Error",
+        description: "Por favor complete todos los campos requeridos",
+      })
       return
     }
-
-    setIsSubmitting(true)
 
     try {
       // Simular creación
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      showSuccess("Plan de acción creado exitosamente")
+      toast({
+        title: "Éxito",
+        description: "Plan de acción creado exitosamente",
+      })
 
       // Limpiar formulario
       setFinding("")
@@ -205,9 +213,10 @@ export default function ActionPlansPage() {
 
       setIsDialogOpen(false)
     } catch (error) {
-      showError("Error al crear el plan de acción")
-    } finally {
-      setIsSubmitting(false)
+      toast({
+        title: "Error",
+        description: "Error al crear el plan de acción",
+      })
     }
   }
 
@@ -337,11 +346,11 @@ export default function ActionPlansPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleCreateActionPlan} disabled={isSubmitting}>
-                {isSubmitting ? "Creando..." : "Guardar"}
+              <Button onClick={handleCreateActionPlan}>
+                Guardar
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -416,7 +425,10 @@ export default function ActionPlansPage() {
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        onClick={() => handleDeleteClick(plan.id)}
+                        onClick={() => {
+                          setSelectedId(plan.id)
+                          setIsDeleteDialogOpen(true)
+                        }}
                         className="text-red-600 focus:text-red-600"
                       >
                         <Trash2 className="mr-2 h-4 w-4" /> Eliminar
@@ -430,34 +442,31 @@ export default function ActionPlansPage() {
         </Table>
       </div>
 
-      {/* Diálogo de confirmación para eliminar */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Está seguro de eliminar este plan de acción?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. El plan de acción será eliminado permanentemente de nuestros servidores.
-              <div className="mt-4">
-                <div className="font-medium text-sm">
-                  Para confirmar, escriba el ID del plan de acción: {planToDelete}
-                </div>
-                <Input
-                  className="mt-2"
-                  value={confirmationId}
-                  onChange={(e) => setConfirmationId(e.target.value)}
-                  placeholder="Escriba el ID para confirmar"
-                />
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar Plan de Acción</DialogTitle>
+            <DialogDescription>
+              ¿Está seguro de que desea eliminar este plan de acción? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isLoading}
+            >
+              {isLoading ? "Eliminando..." : "Eliminar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

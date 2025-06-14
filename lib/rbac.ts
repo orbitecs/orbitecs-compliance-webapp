@@ -1,4 +1,7 @@
+"use client"
+
 import React from "react"
+import { toast } from "@/components/ui/use-toast"
 // Definición de roles y permisos
 export type Role = "admin" | "gestor" | "auditor" | "lector"
 
@@ -114,10 +117,14 @@ export function PermissionGuard({
   const { hasPermission, hasAnyPermission } = usePermissions()
 
   const permissionsArray = Array.isArray(permissions) ? permissions : [permissions]
-
   if (hasAnyPermission(permissionsArray)) {
-    return <>{children}</>
+    return children
   }
 
   return null
+}
+
+export function NotificationsPopover({ children }: { children: React.ReactNode }) {
+  // Puedes personalizar el contenido aquí
+  return <>{children}</>
 }

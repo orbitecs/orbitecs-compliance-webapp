@@ -5,7 +5,7 @@ import { createContext, useContext, useState, useEffect } from "react"
 import { useMediaQuery } from "@/hooks/use-media-query"
 
 interface SidebarContextType {
-  isCollapsed: boolean
+  isOpen: boolean
   isAutoCollapsed: boolean
   canToggle: boolean
   toggleSidebar: () => void
@@ -25,7 +25,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const isLaptop = useMediaQuery("(min-width: 1025px) and (max-width: 1440px)")
   const isDesktop = useMediaQuery("(min-width: 1441px)")
 
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isOpen, setIsOpen] = useState(true)
   const [isAutoCollapsed, setIsAutoCollapsed] = useState(false)
 
   // Determinar el tamaño de pantalla actual
@@ -42,11 +42,11 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   // Auto-colapsar basado en el tamaño de pantalla
   useEffect(() => {
     if (isTablet) {
-      setIsCollapsed(true)
+      setIsOpen(false)
       setIsAutoCollapsed(true)
     } else if (isLaptop || isDesktop) {
       if (isAutoCollapsed) {
-        setIsCollapsed(false)
+        setIsOpen(true)
         setIsAutoCollapsed(false)
       }
     }
@@ -57,7 +57,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 
   const toggleSidebar = () => {
     if (canToggle) {
-      setIsCollapsed(!isCollapsed)
+      setIsOpen(!isOpen)
       setIsAutoCollapsed(false)
     }
   }
@@ -80,7 +80,7 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
   }
 
   const value = {
-    isCollapsed,
+    isOpen,
     isAutoCollapsed,
     canToggle,
     toggleSidebar,

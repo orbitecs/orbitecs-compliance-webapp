@@ -1,9 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Menu, Search, User, Bot } from "lucide-react"
-
+import Image from "next/image"
+import { Bell, Menu, Bot, Search, MessageSquare, User, Settings, LogOut } from "lucide-react"
+import { useSidebar } from "@/components/sidebar-context"
 import { Button } from "@/components/ui/button"
+import { NotificationsPopover } from "@/components/notifications/notifications-popover"
+import { AIAssistant } from "@/components/ai-assistant"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,97 +15,95 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { MobileSidebar } from "@/components/mobile-sidebar"
-import { AIAssistant } from "@/components/ai-assistant"
-import { NotificationsDropdown } from "@/components/notifications/notifications-dropdown"
 
 export function Header() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false)
+  const { toggleSidebar } = useSidebar()
+  const [aiOpen, setAiOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
 
   return (
-    <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 w-full sticky top-0 z-20">
-      <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8 max-w-full">
-        {/* Sección Izquierda */}
-        <div className="flex items-center gap-4 flex-shrink-0">
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-6 w-6" />
-                <span className="sr-only">Abrir menú</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0">
-              <MobileSidebar />
-            </SheetContent>
-          </Sheet>
-          <h1 className="text-xl font-semibold tracking-tight">ComplianceHub</h1>
-        </div>
+    <>
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="flex h-14 items-center px-6 w-full">
+          {/* Logo */}
+          <div className="flex items-center min-w-[220px]">
+            <a className="flex items-center space-x-2" href="/">
+              <span className="font-bold">Orbitecs Compliance</span>
+            </a>
+          </div>
 
-        {/* Sección Central - Campo de Búsqueda */}
-        <div className="flex-1 flex justify-center px-4">
-          <div className="relative w-full max-w-md hidden md:block">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-gray-400" />
+          {/* Buscador centrado */}
+          <div className="flex-1 flex justify-center">
+            <div className="relative w-full max-w-md">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Buscar..."
+                className="w-full rounded-lg bg-background pl-8"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
             </div>
-            <Input type="search" placeholder="Buscar assessments, checklists, planes..." className="pl-10 w-full" />
+          </div>
+
+          {/* Iconos de la derecha */}
+          <div className="flex items-center gap-2 min-w-[100px] justify-end">
+            <NotificationsPopover>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+                  3
+                </span>
+              </Button>
+            </NotificationsPopover>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setAiOpen(true)}
+              className="relative"
+            >
+              <MessageSquare className="h-5 w-5" />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src="/avatars/01.png" alt="Usuario" />
+                    <AvatarFallback>U</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">Usuario</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      usuario@orbitecs.com
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Perfil</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Configuración</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Cerrar sesión</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
-
-        {/* Sección Derecha */}
-        <div className="flex items-center space-x-4 flex-shrink-0">
-          {/* Campo de búsqueda móvil */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Search className="h-5 w-5" />
-                <span className="sr-only">Buscar</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="top" className="h-auto">
-              <div className="p-4">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-4 w-4 text-gray-400" />
-                  </div>
-                  <Input
-                    type="search"
-                    placeholder="Buscar assessments, checklists, planes..."
-                    className="pl-10 w-full"
-                    autoFocus
-                  />
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
-
-          <Button variant="ghost" size="icon" onClick={() => setIsAIAssistantOpen(true)} className="relative">
-            <Bot className="h-5 w-5" />
-            <span className="absolute top-0 right-0 h-2 w-2 bg-emerald-500 rounded-full"></span>
-            <span className="sr-only">Asistente IA</span>
-          </Button>
-          <NotificationsDropdown />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <User className="h-5 w-5" />
-                <span className="sr-only">Perfil</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Perfil</DropdownMenuItem>
-              <DropdownMenuItem>Configuración</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Cerrar sesión</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-      <AIAssistant isOpen={isAIAssistantOpen} onClose={() => setIsAIAssistantOpen(false)} />
-    </header>
+      </header>
+      <AIAssistant isOpen={aiOpen} onClose={() => setAiOpen(false)} />
+    </>
   )
 }

@@ -3,6 +3,10 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Plus, Trash2 } from "lucide-react"
+import { format } from "date-fns"
+import { es } from "date-fns/locale"
+import { Save, X } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,8 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { cn } from "@/lib/utils"
-import { format } from "date-fns"
-import { useToastContext } from "@/components/ui/toast-provider"
+import { useToast } from "@/components/ui/use-toast"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -104,7 +107,7 @@ const availableAssessments = [
 
 export default function EditActionPlanPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const { showSuccess, showError } = useToastContext()
+  const { showSuccess, showError } = useToast()
   const [actionPlan, setActionPlan] = useState(actionPlanData)
   const [date, setDate] = useState<Date | undefined>(actionPlanData.dueDate)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -219,6 +222,23 @@ export default function EditActionPlanPage({ params }: { params: { id: string } 
       setDiscardDialogOpen(true)
     } else {
       router.back()
+    }
+  }
+
+  // Manejar guardar cambios
+  const handleSaveChanges = async () => {
+    try {
+      // Aquí iría la lógica para guardar los cambios
+      toast({
+        title: "Éxito",
+        description: "Cambios guardados correctamente.",
+      })
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Hubo un error al guardar los cambios.",
+        variant: "destructive",
+      })
     }
   }
 

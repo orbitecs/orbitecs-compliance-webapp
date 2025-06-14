@@ -3,24 +3,20 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Pencil, Trash2, FileText, Download } from "lucide-react"
+import { toast } from "@/components/ui/use-toast"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ComplianceChart } from "@/components/assessments/compliance-chart"
-import { useToastContext } from "@/components/ui/toast-provider"
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Input } from "@/components/ui/input"
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 // Datos de ejemplo para un assessment específico
 const assessmentData = {
@@ -140,10 +136,9 @@ const severityMap = {
 
 export default function AssessmentDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const { showSuccess, showError } = useToastContext()
   const [activeTab, setActiveTab] = useState("summary")
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [confirmationId, setConfirmationId] = useState("")
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   // En una aplicación real, aquí cargaríamos los datos del assessment según el ID
   // Por ahora usamos los datos de ejemplo
@@ -160,24 +155,32 @@ export default function AssessmentDetailPage({ params }: { params: { id: string 
     assessment.checklists.reduce((sum, checklist) => sum + checklist.compliance, 0) / assessment.checklists.length,
   )
 
-  const handleDeleteClick = () => {
-    setConfirmationId("")
-    setDeleteDialogOpen(true)
-  }
-
-  const handleDeleteConfirm = () => {
-    if (confirmationId === assessment.id) {
-      // Aquí iría la lógica para eliminar el assessment
-      showSuccess(`Assessment ${assessment.id} eliminado correctamente`)
-      setDeleteDialogOpen(false)
+  const handleDelete = async () => {
+    setIsLoading(true)
+    try {
+      // Aquí iría la llamada a la API para eliminar el assessment
+      toast({
+        title: "Éxito",
+        description: "Assessment eliminado correctamente",
+      })
       router.push("/assessments")
-    } else {
-      showError("El ID de confirmación no coincide")
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Hubo un error al eliminar el assessment",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+      setIsDeleteDialogOpen(false)
     }
   }
 
   const handleExportPDF = () => {
-    showSuccess("Exportación a PDF iniciada")
+    toast({
+      title: "Éxito",
+      description: "Exportación a PDF iniciada",
+    })
     // Aquí iría la lógica para exportar a PDF
   }
 
@@ -201,7 +204,7 @@ export default function AssessmentDetailPage({ params }: { params: { id: string 
           <Button variant="outline" onClick={() => router.push(`/assessments/${params.id}/edit`)}>
             <Pencil className="mr-2 h-4 w-4" /> Editar
           </Button>
-          <Button variant="destructive" onClick={handleDeleteClick}>
+          <Button variant="destructive" onClick={() => setIsDeleteDialogOpen(true)}>
             <Trash2 className="mr-2 h-4 w-4" /> Eliminar
           </Button>
         </div>
@@ -417,32 +420,31 @@ export default function AssessmentDetailPage({ params }: { params: { id: string 
         </TabsContent>
       </Tabs>
 
-      {/* Diálogo de confirmación para eliminar */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Está seguro de eliminar este assessment?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta acción no se puede deshacer. El assessment será eliminado permanentemente de nuestros servidores.
-              <div className="mt-4">
-                <div className="font-medium text-sm">Para confirmar, escriba el ID del assessment: {assessment.id}</div>
-                <Input
-                  className="mt-2"
-                  value={confirmationId}
-                  onChange={(e) => setConfirmationId(e.target.value)}
-                  placeholder="Escriba el ID para confirmar"
-                />
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteConfirm} className="bg-red-600 hover:bg-red-700">
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Eliminar Assessment</DialogTitle>
+            <DialogDescription>
+              ¿Está seguro de que desea eliminar este assessment? Esta acción no se puede deshacer.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isLoading}
+            >
+              {isLoading ? "Eliminando..." : "Eliminar"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -1,23 +1,21 @@
-import type React from "react"
-import type { Metadata } from "next/metadata"
+import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import "./globals.css"
 
 import { ThemeProvider } from "@/components/theme-provider"
-import { Sidebar } from "@/components/sidebar"
 import { Header } from "@/components/header"
+import { Sidebar } from "@/components/sidebar"
 import { RBACProvider } from "@/components/rbac-provider"
-import { ToastProvider } from "@/components/ui/toast-provider"
+import { Toaster } from "@/components/ui/toaster"
 import { NotificationsProvider } from "@/components/notifications/notifications-context"
 import { SidebarProvider } from "@/components/sidebar-context"
 import { LayoutWrapper } from "@/components/layout-wrapper"
-import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "ComplianceHub",
-  description: "Plataforma de gestión de compliance",
-    generator: 'v0.dev'
+  title: "Orbitecs Compliance",
+  description: "Sistema de Gestión de Cumplimiento",
 }
 
 export default function RootLayout({
@@ -27,23 +25,27 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={`${inter.className} antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <ToastProvider>
-            <RBACProvider initialRole="admin">
-              <NotificationsProvider>
-                <SidebarProvider>
-                  <div className="relative flex min-h-screen flex-col">
-                    <Header />
-                    <div className="flex flex-1">
-                      <Sidebar />
-                      <LayoutWrapper>{children}</LayoutWrapper>
-                    </div>
+      <body className={inter.className}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <RBACProvider>
+            <NotificationsProvider>
+              <SidebarProvider>
+                <div className="relative flex min-h-screen flex-col">
+                  <Header />
+                  <div className="flex flex-1">
+                    <Sidebar />
+                    <LayoutWrapper>{children}</LayoutWrapper>
                   </div>
-                </SidebarProvider>
-              </NotificationsProvider>
-            </RBACProvider>
-          </ToastProvider>
+                </div>
+              </SidebarProvider>
+            </NotificationsProvider>
+          </RBACProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

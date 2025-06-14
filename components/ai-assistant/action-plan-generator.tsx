@@ -1,6 +1,8 @@
 "use client"
 import { useState } from "react"
 import { FileText, Download, Save, Wand2, AlertTriangle, Calendar, User } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { toast } from "@/components/ui/use-toast"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -39,6 +41,7 @@ interface ActionPlanGeneratorProps {
 }
 
 export function ActionPlanGenerator({ onClose, onSave }: ActionPlanGeneratorProps) {
+  const router = useRouter()
   const [step, setStep] = useState<"input" | "generating" | "result">("input")
   const [findingDescription, setFindingDescription] = useState("")
   const [findingCategory, setFindingCategory] = useState("")
@@ -47,6 +50,7 @@ export function ActionPlanGenerator({ onClose, onSave }: ActionPlanGeneratorProp
   const { showToast } = useToastContext()
   const [similarCases, setSimilarCases] = useState<SuccessCase[]>([])
   const [showSimilarCases, setShowSimilarCases] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const categories = [
     "Seguridad de la Información",
@@ -285,6 +289,28 @@ export function ActionPlanGenerator({ onClose, onSave }: ActionPlanGeneratorProp
     setStep("result")
   }
 
+  const handleGenerateActionPlan = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+
+    try {
+      await generateActionPlan()
+      toast({
+        title: "Éxito",
+        description: "Plan de acción generado correctamente",
+      })
+      router.push("/action-plans")
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Hubo un error al generar el plan de acción",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   if (showSimilarCases) {
     return (
       <div className="w-full max-w-4xl mx-auto space-y-4">
@@ -367,9 +393,8 @@ export function ActionPlanGenerator({ onClose, onSave }: ActionPlanGeneratorProp
             <Button variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button onClick={generateActionPlan} disabled={!findingDescription.trim() || !findingCategory}>
-              <Wand2 className="h-4 w-4 mr-2" />
-              Generar Plan
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Generando..." : "Generar Plan"}
             </Button>
           </div>
         </CardContent>
