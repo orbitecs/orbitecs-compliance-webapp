@@ -1,21 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import Image from "next/image"
-import { Bell, Menu, Bot, Search, MessageSquare, User, Settings, LogOut } from "lucide-react"
+import { Bell, Menu, Bot, Search } from "lucide-react"
 import { useSidebar } from "@/components/sidebar-context"
 import { Button } from "@/components/ui/button"
 import { NotificationsPopover } from "@/components/notifications/notifications-popover"
 import { AIAssistant } from "@/components/ai-assistant"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { UserNav } from "@/components/user-nav"
 import { Input } from "@/components/ui/input"
 
 export function Header() {
@@ -65,40 +56,7 @@ export function Header() {
           >
             <Bot className="h-5 w-5" />
           </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative button-hover">
-                <Avatar className="h-8 w-8 ring-2 ring-primary/10 hover:ring-primary/20 transition-all duration-200">
-                  <AvatarImage src="/default-avatar.svg" alt="Usuario" />
-                  <AvatarFallback className="bg-muted text-muted-foreground">U</AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 glass-effect" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Usuario</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    usuario@orbitecs.com
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="nav-link">
-                <User className="mr-2 h-4 w-4" />
-                <span>Perfil</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="nav-link">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Configuración</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="nav-link text-destructive">
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Cerrar sesión</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <UserNav />
         </div>
       </div>
       <AIAssistant open={isAIOpen} onOpenChange={setIsAIOpen} />

@@ -1,10 +1,16 @@
 "use client"
 
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { UserProfile } from "@/components/profile/user-profile"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Building2, Factory, Mail, Phone, Globe, MapPin } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+
+interface ProfileModalProps {
+  isOpen: boolean
+  onClose: () => void
+}
 
 // Datos de ejemplo - En producción esto vendría de tu backend
 const companyData = {
@@ -17,38 +23,6 @@ const companyData = {
     website: "www.orbitecs.com",
     address: "Av. Apoquindo 4500, Las Condes, Santiago"
   }
-}
-
-export default function ProfilePage() {
-  return (
-    <div className="container mx-auto py-8">
-      <div className="grid gap-6">
-        {/* Encabezado */}
-        <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight">Perfil</h1>
-          <p className="text-muted-foreground">
-            Gestiona tu perfil y la información de tu empresa
-          </p>
-        </div>
-
-        {/* Pestañas */}
-        <Tabs defaultValue="user" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="user">Mi Perfil</TabsTrigger>
-            <TabsTrigger value="company">Empresa</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="user">
-            <UserProfile />
-          </TabsContent>
-
-          <TabsContent value="company">
-            <CompanyProfile />
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
-  )
 }
 
 function CompanyProfile() {
@@ -153,3 +127,29 @@ function CompanyProfile() {
     </div>
   )
 }
+
+export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Perfil</DialogTitle>
+        </DialogHeader>
+        <Tabs defaultValue="user" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="user">Mi Perfil</TabsTrigger>
+            <TabsTrigger value="company">Empresa</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="user">
+            <UserProfile />
+          </TabsContent>
+
+          <TabsContent value="company">
+            <CompanyProfile />
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  )
+} 

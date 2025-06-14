@@ -8,7 +8,6 @@ import {
   CheckSquare,
   ClipboardList,
   FileCheck,
-  Settings,
   Users,
   ChevronLeft,
   ChevronRight,
@@ -56,69 +55,14 @@ const navigation = [
     icon: Users,
     permission: "users.view" as Permission,
   },
-  {
-    name: "Configuración",
-    href: "/settings",
-    icon: Settings,
-    permission: "settings.view" as Permission,
-  },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
+  const { isOpen, toggleSidebar } = useSidebar()
   const { hasPermission } = useRBAC()
-  const { isOpen, isAutoCollapsed, canToggle, toggleSidebar, getScreenSizeLabel, isMobile } = useSidebar()
 
-  // Forzar que todas las opciones sean visibles
-  const showAllItems = true
-  const visibleNavigation = navigation // Mostrar todos los elementos sin filtrar
-
-  const NavigationItem = ({ item }: { item: (typeof navigation)[0] }) => {
-    const isActive = pathname === item.href
-
-    const linkContent = (
-      <Link
-        href={item.href}
-        className={cn(
-          isActive
-            ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white"
-            : "text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white",
-          "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors",
-          isOpen ? "" : "justify-center px-3",
-        )}
-      >
-        <item.icon
-          className={cn(
-            isActive
-              ? "text-gray-500 dark:text-gray-300"
-              : "text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-300",
-            "flex-shrink-0 h-5 w-5",
-            isOpen ? "" : "mr-3",
-          )}
-          aria-hidden="true"
-        />
-        {isOpen && <span className="truncate">{item.name}</span>}
-      </Link>
-    )
-
-    if (isOpen) {
-      return (
-        <Tooltip>
-          <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-          <TooltipContent side="right" sideOffset={10}>
-            <p>{item.name}</p>
-          </TooltipContent>
-        </Tooltip>
-      )
-    }
-
-    return linkContent
-  }
-
-  // No mostrar sidebar en móvil
-  if (isMobile) {
-    return null
-  }
+  const visibleNavigation = navigation.filter((item) => hasPermission(item.permission))
 
   return (
     <TooltipProvider>
@@ -144,7 +88,7 @@ export function Sidebar() {
                   pathname === item.href
                     ? "bg-accent text-accent-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
-                  !isOpen && "justify-center"
+                  !isOpen && "justify-center px-3"
                 )}
               >
                 <item.icon className="h-5 w-5" />
@@ -154,18 +98,33 @@ export function Sidebar() {
           </nav>
         </div>
         <div className="border-t border-border/50 p-2 glass-effect">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="w-full flex items-center justify-center button-hover"
-            onClick={() => toggleSidebar()}
-          >
-            {isOpen ? (
-              <ChevronLeft className="h-5 w-5 text-muted-foreground" />
-            ) : (
-              <ChevronRight className="h-5 w-5 text-muted-foreground" />
-            )}
-          </Button>
+          <div className="grid gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "w-full flex items-center justify-center transition-all duration-200",
+                    "hover:bg-accent/50 hover:text-accent-foreground",
+                    "focus:bg-accent/50 focus:text-accent-foreground",
+                    "active:bg-accent/70 active:text-accent-foreground",
+                    "rounded-lg"
+                  )}
+                  onClick={() => toggleSidebar()}
+                >
+                  {isOpen ? (
+                    <ChevronLeft className="h-5 w-5 transition-transform duration-200" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5 transition-transform duration-200" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={10}>
+                <p>{isOpen ? "Colapsar menú" : "Expandir menú"}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </div>
       </aside>
     </TooltipProvider>
