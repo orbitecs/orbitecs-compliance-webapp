@@ -124,12 +124,12 @@ export function Sidebar() {
     <TooltipProvider>
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex h-screen flex-col border-r bg-background transition-all duration-300",
+          "fixed inset-y-0 left-0 z-40 flex h-screen flex-col glass-effect border-r transition-all duration-300",
           isOpen ? "w-64" : "w-20"
         )}
       >
         <div className="flex h-14 items-center border-b px-4">
-          <span className={cn("font-semibold", !isOpen && "hidden")}>
+          <span className={cn("font-semibold text-lg tracking-tight text-gradient", !isOpen && "hidden")}>
             Orbitecs Compliance
           </span>
         </div>
@@ -140,10 +140,10 @@ export function Sidebar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 nav-link",
                   pathname === item.href
-                    ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-50"
-                    : "text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-50",
+                    ? "bg-accent text-accent-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
                   !isOpen && "justify-center"
                 )}
               >
@@ -153,17 +153,17 @@ export function Sidebar() {
             ))}
           </nav>
         </div>
-        <div className="border-t border-gray-200 dark:border-gray-800 p-2 bg-background">
+        <div className="border-t border-border/50 p-2 glass-effect">
           <Button
             variant="ghost"
             size="icon"
-            className="w-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="w-full flex items-center justify-center button-hover"
             onClick={() => toggleSidebar()}
           >
             {isOpen ? (
-              <ChevronLeft className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              <ChevronLeft className="h-5 w-5 text-muted-foreground" />
             ) : (
-              <ChevronRight className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
             )}
           </Button>
         </div>
