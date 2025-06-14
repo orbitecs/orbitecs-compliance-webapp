@@ -107,7 +107,7 @@ const availableAssessments = [
 
 export default function EditActionPlanPage({ params }: { params: { id: string } }) {
   const router = useRouter()
-  const { showSuccess, showError } = useToast()
+  const { toast } = useToast()
   const [actionPlan, setActionPlan] = useState(actionPlanData)
   const [date, setDate] = useState<Date | undefined>(actionPlanData.dueDate)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -162,7 +162,10 @@ export default function EditActionPlanPage({ params }: { params: { id: string } 
 
     setDeleteActivityDialogOpen(false)
     setActivityToDelete(null)
-    showSuccess("Actividad eliminada correctamente")
+    toast({
+      title: "Éxito",
+      description: "Actividad eliminada correctamente",
+    })
   }
 
   const handleDeleteActivityClick = (activityId: string) => {
@@ -207,11 +210,18 @@ export default function EditActionPlanPage({ params }: { params: { id: string } 
       // Simular guardado
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      showSuccess("Plan de acción actualizado correctamente")
+      toast({
+        title: "Éxito",
+        description: "Plan de acción actualizado correctamente",
+      })
       setUnsavedChanges(false)
       router.push(`/action-plans/${params.id}`)
     } catch (error) {
-      showError("Error al guardar los cambios")
+      toast({
+        title: "Error",
+        description: "Error al guardar los cambios",
+        variant: "destructive",
+      })
     } finally {
       setIsSubmitting(false)
     }
