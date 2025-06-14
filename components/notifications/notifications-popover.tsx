@@ -43,7 +43,7 @@ const notifications = [
   },
 ]
 
-export function NotificationsPopover() {
+export function NotificationsPopover({ children }: { children: React.ReactNode }) {
   const [notificationsList, setNotificationsList] = React.useState(notifications)
   const unreadCount = notificationsList.filter((n) => !n.read).length
 

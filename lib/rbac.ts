@@ -123,8 +123,3 @@ export function PermissionGuard({
 
   return null
 }
-
-export function NotificationsPopover({ children }: { children: React.ReactNode }) {
-  // Puedes personalizar el contenido aquí
-  return <>{children}</>
-}

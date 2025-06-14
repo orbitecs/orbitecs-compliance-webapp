@@ -1,15 +1,7 @@
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-
-import { ThemeProvider } from "@/components/theme-provider"
-import { Header } from "@/components/header"
-import { Sidebar } from "@/components/sidebar"
-import { RBACProvider } from "@/components/rbac-provider"
-import { Toaster } from "@/components/ui/toaster"
-import { NotificationsProvider } from "@/components/notifications/notifications-context"
-import { SidebarProvider } from "@/components/sidebar-context"
-import { LayoutWrapper } from "@/components/layout-wrapper"
+import { ClientProviders } from "./providers"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -26,27 +18,9 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <RBACProvider>
-            <NotificationsProvider>
-              <SidebarProvider>
-                <div className="relative flex min-h-screen flex-col">
-                  <Header />
-                  <div className="flex flex-1 relative">
-                    <Sidebar />
-                    <LayoutWrapper>{children}</LayoutWrapper>
-                  </div>
-                </div>
-              </SidebarProvider>
-            </NotificationsProvider>
-          </RBACProvider>
-          <Toaster />
-        </ThemeProvider>
+        <ClientProviders>
+          {children}
+        </ClientProviders>
       </body>
     </html>
   )
