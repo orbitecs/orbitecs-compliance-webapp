@@ -45,8 +45,25 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 
+type ActionPlanStatus = "pendiente" | "en-curso" | "finalizado"
+
+interface ActionPlan {
+  id: string
+  finding: string
+  action: string
+  responsible: string
+  dueDate: Date
+  status: ActionPlanStatus
+}
+
+const statusMap: Record<ActionPlanStatus, { label: string; variant: "outline" | "default" | "secondary" }> = {
+  pendiente: { label: "Pendiente", variant: "outline" },
+  "en-curso": { label: "En curso", variant: "default" },
+  finalizado: { label: "Finalizado", variant: "secondary" },
+}
+
 // Datos de ejemplo
-const actionPlans = [
+const actionPlans: ActionPlan[] = [
   {
     id: "AP-001",
     finding: "No existe una política de seguridad de la información aprobada",
@@ -113,12 +130,6 @@ const availableAssessments = [
   },
 ]
 
-const statusMap = {
-  pendiente: { label: "Pendiente", variant: "outline" as const },
-  "en-curso": { label: "En curso", variant: "default" as const },
-  finalizado: { label: "Finalizado", variant: "secondary" as const },
-}
-
 export default function ActionPlansPage() {
   const router = useRouter()
   const [searchTerm, setSearchTerm] = useState("")
@@ -134,7 +145,7 @@ export default function ActionPlansPage() {
   const [finding, setFinding] = useState("")
   const [action, setAction] = useState("")
   const [responsible, setResponsible] = useState("")
-  const [status, setStatus] = useState("pendiente")
+  const [status, setStatus] = useState("pendiente" as ActionPlanStatus)
 
   const filteredActionPlans = actionPlans.filter((plan) => {
     const matchesSearch =
@@ -208,7 +219,7 @@ export default function ActionPlansPage() {
       setAction("")
       setResponsible("")
       setDate(undefined)
-      setStatus("pendiente")
+      setStatus("pendiente" as ActionPlanStatus)
       setSelectedAssessments([])
 
       setIsDialogOpen(false)
@@ -288,7 +299,7 @@ export default function ActionPlansPage() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="status">Estado</Label>
-                <Select value={status} onValueChange={setStatus}>
+                <Select value={status} onValueChange={(value) => setStatus(value as ActionPlanStatus)}>
                   <SelectTrigger id="status">
                     <SelectValue />
                   </SelectTrigger>
